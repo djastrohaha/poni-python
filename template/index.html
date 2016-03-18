@@ -1,0 +1,173 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <style>
+      body { margin: 0px; padding: 0px; }
+      canvas { border: 1px solid #9C9898; }
+	  
+	#myProgress {
+	  position: relative;
+	  width: 100%;
+	  height: 30px;
+	  background-color: #ddd;
+	}
+
+	#myBar {
+	  position: absolute;
+	  width: 1%;
+	  height: 100%;
+	  background-color: #4CAF50;
+	}
+
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/kineticjs/5.2.0/kinetic.min.js"></script>
+	<script src="http://code.jquery.com/jquery.min.js"></script>
+	<script type="text/javascript" src="static/js/canvasjs/canvasjs.min.js"></script>
+    <script type="text/javascript">
+	var dps = []; // dataPoints
+	var xVal = 0;
+	var yVal = 1;	
+	var dataLength = 200; // number of dataPoints visible at any point
+	var chart;
+	var msg;
+	
+	
+	sendMessage = function(message) {
+    socket.send(message);
+    };
+ 
+    var value = 0;
+ 
+    window.onload = function() {
+    var stage = new Kinetic.Stage({
+          container: "container",
+          width: 610,
+          height: 400
+    });
+ 
+    var layer  = new Kinetic.Layer();
+ 
+	var circle = new Kinetic.Circle({
+	  x: 100,
+	  y: 100,
+	  radius: 10,
+	  fill: "red",
+	  stroke: "black",
+	  strokeWidth: 4,
+	  draggable: true
+	});
+
+	circle.on("mousedown", function() {
+	  sendMessage('{"action":"switchLed"}');
+	});
+
+	layer.add(circle);
+	stage.add(layer);
+	
+	
+	chart = new CanvasJS.Chart("chartContainer",{
+		title :{
+			text: "Live Random Data"
+		},			
+		data: [{
+			type: "line",
+			dataPoints: dps 
+		}]
+		});
+
+    }
+	function updateChart(count) {
+	
+		dps.push({
+			x: xVal,
+			y: parseFloat(count)
+		});
+			
+		xVal++;
+			
+		if (dps.length > dataLength)
+		{
+			dps.shift();				
+		}
+			
+		chart.render();		
+
+	};
+	
+	var updateText = function(text) {
+	document.getElementById("maValeur").innerHTML='Valeur lumiere : '+text;
+	
+	};
+		
+      var socket = new WebSocket("ws://127.0.0.1:8080/ws");
+	  //var socket = new WebSocket("ws://192.168.1.23:8080/ws");
+      socket.onopen = function(){  
+        console.log("connected"); 
+      }; 
+ 
+      socket.onmessage = function (message) {
+	  console.log("receiving: " + message.data);
+	  msg = JSON.parse(message.data);
+       
+	  console.log("receiving json: " + msg.action);
+		/*
+		switch (msg){
+			
+			case 
+		
+		
+		}
+		*/
+	
+		
+		//updateText(message.data);
+		//move(message.data);
+		//updateChart(message.data);
+      };
+ 
+      socket.onclose = function(){
+        console.log("disconnected"); 
+      };
+ 
+ 
+	  
+	  function move(value) {
+	  var elem = document.getElementById("myBar");   
+	  var width = value*100;
+	  
+	  
+		if (width >= 100) {
+			elem.style.width = 100 + '%';;
+		} else {
+			
+			elem.style.width = width + '%'; 
+		}
+		}
+		
+		
+		
+	
+	
+
+		
+
+	
+
+ 
+    </script>
+	
+  </head>
+  <body>
+  <div id="chartContainer" style="height: 300px; width:100%;">
+	</div>
+	<p id="maValeur">toto</p>
+    <div id="container"></div>
+	<div id="myProgress">
+		<div id="myBar"></div>
+	</div>
+	
+	
+	
+		
+  </body>
+</html>
